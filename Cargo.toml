@@ -5,3 +5,11 @@ authors = ["Mendelt Siebenga <msiebenga@lely.com>"]
 edition = "2018"
 
 [dependencies]
+clap = "2.32"
+serde = "1.0"
+serde_derive = "1.0"
+toml = "0.4.10"
+
+[[bin]]
+name = "click"
+path = "src/main.rs"
