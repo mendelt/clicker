@@ -1,14 +1,38 @@
 use serde_derive::Deserialize;
 use std::collections::HashMap;
+use failure::Error;
+use std::fs::File;
+use std::io::Read;
 
-#[derive(Deserialize, Debug)]
+
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Manifest {
     #[serde(default)]
-    name: String,
+    values: HashMap<String, Value>,
 
     #[serde(default)]
-    values: HashMap<String, String>,
-    templates: Vec<Template>,
+    templates: HashMap<String, Template>,
+
+    #[serde(flatten)]
+    default_template: Template,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+pub struct Template {
+    source: Option<String>,
+    destination: Option<String>,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(untagged)]
+pub enum Value {
+    DirectValue(String),
+    UserValue(UserValueValue),
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+pub struct UserValueValue {
+    user_prompt: String
 }
 
 impl Manifest {
@@ -16,14 +40,13 @@ impl Manifest {
         println!("{}", manifest_text);
         toml::from_str(manifest_text).unwrap()
     }
-}
 
-#[derive(Deserialize, Debug)]
-pub struct Template {
-    name: String,
+    pub fn parse_file(path: &str) -> Result<Self, Error> {
+        let mut content = String::new();
+        File::open(path)?.read_to_string(&mut content)?;
 
-    source: Option<String>,
-    destination: Option<String>,
+        Ok(Self::from_string(&content))
+    }
 }
 
 #[cfg(test)]
@@ -31,43 +54,73 @@ mod tests {
     use super::*;
 
     #[test]
-    fn should_parse_manifest_name() {
+    fn should_parse_empty_manifest() {
+        let man = Manifest::from_string("");
 
-        let man = Manifest::from_string(r#"
-name= "name"
-[templates]
-        "#);
-
-        assert_eq!(man.name, "name".to_string());
+        assert_eq!(
+            man,
+            Manifest {
+                values: HashMap::new(),
+                templates: HashMap::new(),
+                default_template: Template { source: None, destination: None }
+            }
+        );
     }
 
     #[test]
-    fn should_parse_empty_name() {
-        let man = Manifest::from_string( r#"[templates]"#);
-
-        assert_eq!(man.name, String::default())
-    }
-
-    #[test]
-    fn should_parse_values() {
-        let man = Manifest::from_string(r#"
-name = "name"
-
-[templates]
+    fn should_parse_default_template() {
+        let man = Manifest::from_string( r#"
+            source = "source"
+            destination = "destination"
         "#);
 
-        assert_eq!(man.values["value1"], "value one".to_string());
-        assert_eq!(man.values["value2"], "value two".to_string());
+        assert_eq!(
+            man.default_template,
+            Template {
+                source: Some("source".to_string()),
+                destination: Some("destination".to_string())
+            }
+        );
     }
 
     #[test]
     fn should_parse_templates() {
         let man = Manifest::from_string(r#"
-name = "name"
-
-[values]
-[templates]
+            [templates.my_template]
+            source = "source"
         "#);
 
+        assert_eq!(
+            man.templates["my_template"],
+            Template {
+                source: Some("source".to_string()),
+                destination: None
+            }
+        )
+    }
+
+    #[test]
+    fn should_parse_string_values() {
+        let man = Manifest::from_string(r#"
+            [values]
+            my_value = "stuff"
+            my_other_value = "other stuff"
+        "#);
+
+        assert_eq!(man.values["my_value"], Value::DirectValue("stuff".to_string()));
+        assert_eq!(man.values["my_other_value"], Value::DirectValue("other stuff".to_string()));
+    }
+
+    #[test]
+    fn should_parse_user_values() {
+        let man = Manifest::from_string(r#"
+            [values.my_value]
+            user_prompt = "Please enter a value"
+        "#);
+
+        assert_eq!(
+            man.values["my_value"],
+            Value::UserValue(UserValueValue {user_prompt: "Please enter a value".to_string()})
+        )
     }
 }
