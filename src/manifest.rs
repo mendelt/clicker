@@ -1,10 +1,9 @@
+use failure::Error;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
-use failure::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct Manifest {
@@ -33,7 +32,7 @@ pub enum Value {
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct UserValueValue {
-    user_prompt: String
+    user_prompt: String,
 }
 
 impl Manifest {
@@ -62,17 +61,22 @@ mod tests {
             Manifest {
                 values: HashMap::new(),
                 templates: HashMap::new(),
-                default_template: Template { source: None, destination: None }
+                default_template: Template {
+                    source: None,
+                    destination: None
+                }
             }
         );
     }
 
     #[test]
     fn should_parse_default_template() {
-        let man = Manifest::from_string( r#"
+        let man = Manifest::from_string(
+            r#"
             source = "source"
             destination = "destination"
-        "#);
+        "#,
+        );
 
         assert_eq!(
             man.default_template,
@@ -85,10 +89,12 @@ mod tests {
 
     #[test]
     fn should_parse_templates() {
-        let man = Manifest::from_string(r#"
+        let man = Manifest::from_string(
+            r#"
             [templates.my_template]
             source = "source"
-        "#);
+        "#,
+        );
 
         assert_eq!(
             man.templates["my_template"],
@@ -101,26 +107,38 @@ mod tests {
 
     #[test]
     fn should_parse_string_values() {
-        let man = Manifest::from_string(r#"
+        let man = Manifest::from_string(
+            r#"
             [values]
             my_value = "stuff"
             my_other_value = "other stuff"
-        "#);
+        "#,
+        );
 
-        assert_eq!(man.values["my_value"], Value::DirectValue("stuff".to_string()));
-        assert_eq!(man.values["my_other_value"], Value::DirectValue("other stuff".to_string()));
+        assert_eq!(
+            man.values["my_value"],
+            Value::DirectValue("stuff".to_string())
+        );
+        assert_eq!(
+            man.values["my_other_value"],
+            Value::DirectValue("other stuff".to_string())
+        );
     }
 
     #[test]
     fn should_parse_user_values() {
-        let man = Manifest::from_string(r#"
+        let man = Manifest::from_string(
+            r#"
             [values.my_value]
             user_prompt = "Please enter a value"
-        "#);
+        "#,
+        );
 
         assert_eq!(
             man.values["my_value"],
-            Value::UserValue(UserValueValue {user_prompt: "Please enter a value".to_string()})
+            Value::UserValue(UserValueValue {
+                user_prompt: "Please enter a value".to_string()
+            })
         )
     }
 }

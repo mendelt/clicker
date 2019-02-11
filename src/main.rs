@@ -1,10 +1,10 @@
-use clap::App;
-use clap::Arg;
-use failure::Error;
-use std::collections::HashMap;
 use crate::manifest::Manifest;
 use crate::manifest::Template;
+use clap::App;
+use clap::Arg;
 use clap::ArgMatches;
+use failure::Error;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 mod manifest;
@@ -21,28 +21,23 @@ fn main() -> Result<(), Error> {
 }
 
 struct Application<'a> {
-    matches: ArgMatches<'a>
+    matches: ArgMatches<'a>,
 }
-
 
 impl<'a> Application<'a> {
     fn load() -> Self {
         let matches = App::new("Clicker file and directory templater")
             .version("0.0.1")
-            .arg(Arg::with_name("manifest")
-                .short("m")
-                .long("manifest"))
-            .arg(Arg::with_name("template")
-                .required(true)
-                .index(1)).get_matches();
+            .arg(Arg::with_name("manifest").short("m").long("manifest"))
+            .arg(Arg::with_name("template").required(true).index(1))
+            .get_matches();
 
         Application { matches }
-
     }
 
     fn get_manifest_path(&self) -> Result<PathBuf, Error> {
-        let manifest_path = Path::new(
-            self.matches.value_of("manifest").unwrap_or(".clicker")).canonicalize()?;
+        let manifest_path =
+            Path::new(self.matches.value_of("manifest").unwrap_or(".clicker")).canonicalize()?;
 
         if manifest_path.is_dir() {
             Ok(manifest_path.join(".clicker"))
