@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use failure::Error;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
 
 #[derive(Deserialize, Debug, PartialEq)]
@@ -37,11 +38,10 @@ pub struct UserValueValue {
 
 impl Manifest {
     fn from_string(manifest_text: &str) -> Self {
-        println!("{}", manifest_text);
         toml::from_str(manifest_text).unwrap()
     }
 
-    pub fn parse_file(path: &str) -> Result<Self, Error> {
+    pub fn parse_file(path: &Path) -> Result<Self, Error> {
         let mut content = String::new();
         File::open(path)?.read_to_string(&mut content)?;
 

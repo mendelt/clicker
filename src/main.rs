@@ -3,30 +3,30 @@ use clap::Arg;
 use failure::Error;
 use std::collections::HashMap;
 use crate::manifest::Manifest;
+use crate::manifest::Template;
+use clap::ArgMatches;
+use std::path::{Path, PathBuf};
 
 mod manifest;
 
-fn main() {
-    let app = Application::from_options();
+fn main() -> Result<(), Error> {
+    let app = Application::load();
 
-    println!("Hello click")
+    println!("{:?}", app.get_manifest_path()?);
+    println!("{}", app.get_template());
+
+    let manifest = Manifest::parse_file(app.get_manifest_path()?.as_ref());
+
+    Ok(())
+}
+
+struct Application<'a> {
+    matches: ArgMatches<'a>
 }
 
 
-struct Application {
-    /// The loaded manifest
-    manifest: Manifest,
-
-    /// User options from command line
-    commandline_options: HashMap<String, String>,
-
-    /// Template specified on command line
-    template: Option<String>
-}
-
-
-impl Application {
-    fn from_options() -> Result<Self, Error> {
+impl<'a> Application<'a> {
+    fn load() -> Self {
         let matches = App::new("Clicker file and directory templater")
             .version("0.0.1")
             .arg(Arg::with_name("manifest")
@@ -36,19 +36,22 @@ impl Application {
                 .required(true)
                 .index(1)).get_matches();
 
-        let manifest = Manifest::parse_file(matches.value_of("manifest").unwrap_or(".clicker"))?;
+        Application { matches }
 
-        let template =
-            if let Some(template_ref) = matches.value_of("template") {
-                Some(template_ref.to_string())
-            } else {
-                None
-            };
+    }
 
-        Ok(Application {
-            manifest,
-            commandline_options: HashMap::new(),
-            template,
-        })
+    fn get_manifest_path(&self) -> Result<PathBuf, Error> {
+        let manifest_path = Path::new(
+            self.matches.value_of("manifest").unwrap_or(".clicker")).canonicalize()?;
+
+        if manifest_path.is_dir() {
+            Ok(manifest_path.join(".clicker"))
+        } else {
+            Ok(manifest_path.to_path_buf())
+        }
+    }
+
+    fn get_template(&self) -> String {
+        self.matches.value_of("template").unwrap().to_string()
     }
 }
