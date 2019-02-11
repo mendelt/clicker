@@ -3,6 +3,7 @@ name = "clicker"
 version = "0.1.0"
 authors = ["Mendelt Siebenga <msiebenga@lely.com>"]
 edition = "2018"
+publish = false
 
 [dependencies]
 clap = "2.32"
