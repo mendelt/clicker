@@ -54,22 +54,18 @@ impl TemplateValue {
     ) -> Result<BTreeMap<String, TemplateValue>, ManifestError> {
         if let Some(template_value) = manifest.get("values") {
             if let Value::Table(values) = template_value {
-                Ok(BTreeMap::from_iter(
-                    values.into_iter().map(|(name, value)|
-                        match value {
-                            Value::String(direct_val) => (name.to_owned(), TemplateValue::Direct(direct_val.to_string())),
-                            _ => (name.to_owned(), TemplateValue::Direct("unknown".to_string()))
-                        }
-                    )
-                ))
-//                    if let
-//                } Value::Table(values) = template_value {
-//                for (name, value) in values {
-//                    match value {
-//                        case Value::String(direct): ...,
-//                        case Value::Table()
-//                    }
-
+                Ok(BTreeMap::from_iter(values.into_iter().map(
+                    |(name, value)| match value {
+                        Value::String(direct_val) => (
+                            name.to_owned(),
+                            TemplateValue::Direct(direct_val.to_string()),
+                        ),
+                        _ => (
+                            name.to_owned(),
+                            TemplateValue::Direct("unknown".to_string()),
+                        ),
+                    },
+                )))
             } else {
                 // Values is not a map, error!
                 Err(ManifestError::ParseError)
