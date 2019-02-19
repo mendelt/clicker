@@ -1,67 +1,72 @@
 use failure::{Error, Fail};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
 use toml::Value;
-use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq)]
 pub struct Manifest {
-    values: HashMap<String, TemplateValue>,
-    templates: HashMap<String, Template>,
-    default_template: Option<Template>,
+    values: BTreeMap<String, TemplateValue>,
+    templates: BTreeMap<String, Template>,
 }
 
-
-#[derive(Debug, Fail)]
+#[derive(Debug, PartialEq, Fail)]
 enum ManifestError {
     #[fail(display = "error parsing manifest")]
-    ParseError {},
-
+    ParseError,
 }
-
 
 impl Manifest {
     fn parse_toml(manifest_text: &str) -> Result<Self, ManifestError> {
         if let Ok(Value::Table(manifest_value)) = manifest_text.parse() {
             Ok(Manifest {
-                values: TemplateValue::parse_values(&manifest_value),
+                values: TemplateValue::parse_values(&manifest_value)?,
                 templates: Template::parse_templates(&manifest_value),
-                default_template: Template::parse_default(&manifest_value),
             })
         } else {
-            Err(ManifestError::ParseError {})
+            Err(ManifestError::ParseError)
         }
     }
 
-//    pub fn parse_file(path: &Path) -> Result<Self, Error> {
-//        let mut content = String::new();
-//        File::open(path)?.read_to_string(&mut content)?;
-//
-//        Ok(Self::parse_string(&content))
-//    }
+    pub fn parse_file(path: &Path) -> Result<Self, Error> {
+        let mut content = String::new();
+        File::open(path)?.read_to_string(&mut content)?;
+
+        Ok(Self::parse_toml(&content)?)
+    }
 }
 
 #[derive(Debug, PartialEq)]
 pub enum TemplateValue {
+    /// Template value is given in the manifest
     Direct(String),
-    User(UserValueValue),
+
+    /// Template value is given by the user either on the command line or interactively
+    User(UserTemplateValue),
 }
 
 impl TemplateValue {
-    fn parse_values(val: &BTreeMap<String, Value>) -> HashMap<String, TemplateValue> {
-        HashMap::new()
+    fn parse_values(
+        manifest: &BTreeMap<String, Value>,
+    ) -> Result<BTreeMap<String, TemplateValue>, ManifestError> {
+        if let Some(template_value) = manifest.get("values") {
+            if let Value::Table(values) = template_value {
+                Ok(BTreeMap::new())
+            } else {
+                Err(ManifestError::ParseError)
+            }
+        } else {
+            Ok(BTreeMap::new())
+        }
     }
 }
 
-
 #[derive(Debug, PartialEq)]
-pub struct UserValueValue {
+pub struct UserTemplateValue {
     user_prompt: String,
 }
-
 
 #[derive(Debug, PartialEq)]
 pub struct Template {
@@ -72,20 +77,11 @@ pub struct Template {
     destination: Option<String>,
 }
 
-
 impl Template {
-    fn parse_templates(val: &BTreeMap<String, Value>) -> HashMap<String, Template> {
-        HashMap::new()
-    }
-
-    fn parse_default(val: &BTreeMap<String, Value>) -> Option<Template> {
-        None
+    fn parse_templates(val: &BTreeMap<String, Value>) -> BTreeMap<String, Template> {
+        BTreeMap::new()
     }
 }
-
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -98,83 +94,84 @@ mod tests {
         assert_eq!(
             man,
             Manifest {
-                values: HashMap::new(),
-                templates: HashMap::new(),
-                default_template: None
+                values: BTreeMap::new(),
+                templates: BTreeMap::new(),
             }
         );
     }
 
-//    #[test]
-//    fn should_parse_default_template() {
-//        let man = Manifest::from_string(
-//            r#"
-//            source = "source"
-//            destination = "destination"
-//        "#,
-//        );
-//
-//        assert_eq!(
-//            man.default_template,
-//            Template {
-//                source: Some("source".to_string()),
-//                destination: Some("destination".to_string())
-//            }
-//        );
-//    }
-//
-//    #[test]
-//    fn should_parse_templates() {
-//        let man = Manifest::from_string(
-//            r#"
-//            [templates.my_template]
-//            source = "source"
-//        "#,
-//        );
-//
-//        assert_eq!(
-//            man.templates["my_template"],
-//            Template {
-//                source: Some("source".to_string()),
-//                destination: None
-//            }
-//        )
-//    }
-//
-//    #[test]
-//    fn should_parse_string_values() {
-//        let man = Manifest::from_string(
-//            r#"
-//            [values]
-//            my_value = "stuff"
-//            my_other_value = "other stuff"
-//        "#,
-//        );
-//
-//        assert_eq!(
-//            man.values["my_value"],
-//            Value::DirectValue("stuff".to_string())
-//        );
-//        assert_eq!(
-//            man.values["my_other_value"],
-//            Value::DirectValue("other stuff".to_string())
-//        );
-//    }
-//
-//    #[test]
-//    fn should_parse_user_values() {
-//        let man = Manifest::from_string(
-//            r#"
-//            [values.my_value]
-//            user_prompt = "Please enter a value"
-//        "#,
-//        );
-//
-//        assert_eq!(
-//            man.values["my_value"],
-//            Value::UserValue(UserValueValue {
-//                user_prompt: "Please enter a value".to_string()
-//            })
-//        )
-//    }
+    #[test]
+    fn should_fail_parsing_invalid_values() {
+        assert_eq!(
+            Manifest::parse_toml(
+                r#"
+                values = "these_are_not_values"
+            "#
+            ),
+            Err(ManifestError::ParseError)
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn should_parse_string_values() {
+        let man = Manifest::parse_toml(
+            r#"
+            [values]
+            my_value = "stuff"
+            my_other_value = "other stuff"
+        "#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            man.values["my_value"],
+            TemplateValue::Direct("stuff".to_string())
+        );
+        assert_eq!(
+            man.values["my_other_value"],
+            TemplateValue::Direct("other stuff".to_string())
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn should_parse_user_values() {
+        let man = Manifest::parse_toml(
+            r#"
+            [values.my_value]
+            user_prompt = "Please enter a value"
+        "#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            man.values["my_value"],
+            TemplateValue::User(UserTemplateValue {
+                user_prompt: "Please enter a value".to_string()
+            })
+        )
+    }
+
+    #[test]
+    #[ignore]
+    fn should_parse_templates() {
+        let man = Manifest::parse_toml(
+            r#"
+            [templates.my_template]
+            source = "source"
+        "#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            man.templates["my_template"],
+            Template {
+                name: "some_name".to_string(),
+                base_path: PathBuf::new(),
+                source: Some("source".to_string()),
+                destination: None,
+            }
+        )
+    }
 }

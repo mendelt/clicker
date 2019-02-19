@@ -1,10 +1,8 @@
 use crate::manifest::Manifest;
-use crate::manifest::Template;
 use clap::App;
 use clap::Arg;
 use clap::ArgMatches;
 use failure::Error;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 mod manifest;
