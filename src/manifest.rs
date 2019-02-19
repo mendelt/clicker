@@ -2,6 +2,7 @@ use failure::{Error, Fail};
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
+use std::iter::FromIterator;
 use std::path::Path;
 use std::path::PathBuf;
 use toml::Value;
@@ -53,11 +54,28 @@ impl TemplateValue {
     ) -> Result<BTreeMap<String, TemplateValue>, ManifestError> {
         if let Some(template_value) = manifest.get("values") {
             if let Value::Table(values) = template_value {
-                Ok(BTreeMap::new())
+                Ok(BTreeMap::from_iter(
+                    values.into_iter().map(|(name, value)|
+                        match value {
+                            Value::String(direct_val) => (name.to_owned(), TemplateValue::Direct(direct_val.to_string())),
+                            _ => (name.to_owned(), TemplateValue::Direct("unknown".to_string()))
+                        }
+                    )
+                ))
+//                    if let
+//                } Value::Table(values) = template_value {
+//                for (name, value) in values {
+//                    match value {
+//                        case Value::String(direct): ...,
+//                        case Value::Table()
+//                    }
+
             } else {
+                // Values is not a map, error!
                 Err(ManifestError::ParseError)
             }
         } else {
+            // No values, return an empty map
             Ok(BTreeMap::new())
         }
     }
@@ -101,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn should_fail_parsing_invalid_values() {
+    fn should_fail_parsing_invalid_value_map() {
         assert_eq!(
             Manifest::parse_toml(
                 r#"
@@ -113,7 +131,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn should_parse_string_values() {
         let man = Manifest::parse_toml(
             r#"
@@ -151,6 +168,20 @@ mod tests {
                 user_prompt: "Please enter a value".to_string()
             })
         )
+    }
+
+    #[test]
+    #[ignore]
+    fn should_fail_parsing_invalid_value() {
+        assert_eq!(
+            Manifest::parse_toml(
+                r#"
+                [values]
+                my_value = 4
+            "#
+            ),
+            Err(ManifestError::ParseError)
+        );
     }
 
     #[test]
