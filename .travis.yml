@@ -11,6 +11,11 @@ script:
   - cargo build --verbose --all
   - cargo test --verbose --all
 
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
 #deploy:
 #  - provider: script
 #    script: cargo publish --token ${CRATES_IO_TOKEN} --manifest-path cmdr_macro/Cargo.toml
