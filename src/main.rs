@@ -6,6 +6,7 @@ use failure::Error;
 use std::path::{Path, PathBuf};
 
 mod manifest;
+mod manifest_toml;
 
 fn main() -> Result<(), Error> {
     let app = Application::load();

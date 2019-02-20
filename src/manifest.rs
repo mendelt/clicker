@@ -9,8 +9,8 @@ use toml::Value;
 
 #[derive(Debug, PartialEq)]
 pub struct Manifest {
-    values: BTreeMap<String, TemplateValue>,
-    templates: BTreeMap<String, Template>,
+    pub values: BTreeMap<String, TemplateValue>,
+    pub templates: BTreeMap<String, Template>,
 }
 
 #[derive(Debug, PartialEq, Fail)]
@@ -45,7 +45,7 @@ pub enum TemplateValue {
     Direct(String),
 
     /// Template value is given by the user either on the command line or interactively
-    User(UserTemplateValue),
+    User { prompt: String },
 }
 
 impl TemplateValue {
@@ -78,11 +78,6 @@ impl TemplateValue {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct UserTemplateValue {
-    user_prompt: String,
-}
-
-#[derive(Debug, PartialEq)]
 pub struct Template {
     base_path: PathBuf,
     name: String,
@@ -92,7 +87,7 @@ pub struct Template {
 }
 
 impl Template {
-    fn parse_templates(val: &BTreeMap<String, Value>) -> BTreeMap<String, Template> {
+    fn parse_templates(_val: &BTreeMap<String, Value>) -> BTreeMap<String, Template> {
         BTreeMap::new()
     }
 }
@@ -100,19 +95,6 @@ impl Template {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn should_parse_empty_manifest() {
-        let man = Manifest::parse_toml("").unwrap();
-
-        assert_eq!(
-            man,
-            Manifest {
-                values: BTreeMap::new(),
-                templates: BTreeMap::new(),
-            }
-        );
-    }
 
     #[test]
     fn should_fail_parsing_invalid_value_map() {
@@ -123,27 +105,6 @@ mod tests {
             "#
             ),
             Err(ManifestError::ParseError)
-        );
-    }
-
-    #[test]
-    fn should_parse_string_values() {
-        let man = Manifest::parse_toml(
-            r#"
-            [values]
-            my_value = "stuff"
-            my_other_value = "other stuff"
-        "#,
-        )
-        .unwrap();
-
-        assert_eq!(
-            man.values["my_value"],
-            TemplateValue::Direct("stuff".to_string())
-        );
-        assert_eq!(
-            man.values["my_other_value"],
-            TemplateValue::Direct("other stuff".to_string())
         );
     }
 
@@ -160,9 +121,9 @@ mod tests {
 
         assert_eq!(
             man.values["my_value"],
-            TemplateValue::User(UserTemplateValue {
-                user_prompt: "Please enter a value".to_string()
-            })
+            TemplateValue::User {
+                prompt: "Please enter a value".to_string()
+            }
         )
     }
 
