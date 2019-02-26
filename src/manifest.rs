@@ -19,7 +19,6 @@ enum ManifestError {
     ParseError,
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum TemplateValue {
     /// Template value is given in the manifest
@@ -28,7 +27,6 @@ pub enum TemplateValue {
     /// Template value is given by the user either on the command line or interactively
     User { prompt: String },
 }
-
 
 #[derive(Debug, PartialEq)]
 pub struct Template {
@@ -39,8 +37,5 @@ pub struct Template {
     destination: Option<String>,
 }
 
-
 #[cfg(test)]
-mod tests {
-
-}
+mod tests {}

@@ -1,10 +1,10 @@
 use crate::manifest::Manifest;
+use crate::manifest_toml::parse_manifest_file;
 use clap::App;
 use clap::Arg;
 use clap::ArgMatches;
 use failure::Error;
 use std::path::{Path, PathBuf};
-use crate::manifest_toml::parse_manifest_file;
 
 mod manifest;
 mod manifest_toml;
