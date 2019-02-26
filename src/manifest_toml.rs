@@ -1,5 +1,4 @@
-use crate::manifest::Manifest;
-use crate::manifest::TemplateValue;
+use crate::manifest::{Manifest, TemplateValue};
 use failure::Error;
 use serde_derive::Deserialize;
 use std::collections::BTreeMap;
@@ -98,19 +97,6 @@ mod tests {
     }
 
     //    #[test]
-    //    fn should_fail_parsing_invalid_values() {
-    //        assert_eq!(
-    //            parse_manifest_toml(
-    //                r#"
-    //                values = "these_are_not_values"
-    //            "#
-    //            ),
-    //            Err(ManifestError::ParseError)
-    //        );
-    //    }
-    //
-    //    #[test]
-    //    #[ignore]
     //    fn should_parse_user_values() {
     //        let man = parse_manifest_toml(
     //            r#"
@@ -127,23 +113,29 @@ mod tests {
     //            }
     //        )
     //    }
-    //
+
+    #[test]
+    fn should_fail_parsing_invalid_value_list() {
+        assert!(parse_manifest_toml(
+            r#"
+                values = "these_are_not_values"
+            "#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn should_fail_parsing_invalid_value() {
+        assert!(parse_manifest_toml(
+            r#"
+                [values]
+                my_value = 4
+            "#
+        )
+        .is_err(),);
+    }
+
     //    #[test]
-    //    #[ignore]
-    //    fn should_fail_parsing_invalid_value() {
-    //        assert_eq!(
-    //            parse_manifest_toml(
-    //                r#"
-    //                [values]
-    //                my_value = 4
-    //            "#
-    //            ),
-    //            Err(ManifestError::ParseError)
-    //        );
-    //    }
-    //
-    //    #[test]
-    //    #[ignore]
     //    fn should_parse_templates() {
     //        let man = parse_manifest_toml(
     //            r#"
