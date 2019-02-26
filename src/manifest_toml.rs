@@ -3,6 +3,9 @@ use crate::manifest::TemplateValue;
 use failure::Error;
 use serde_derive::Deserialize;
 use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 
 #[derive(Debug, PartialEq, Deserialize)]
 struct ManifestToml {
@@ -24,6 +27,15 @@ struct TemplateToml {
     source: Option<String>,
     destination: Option<String>,
 }
+
+
+pub fn parse_manifest_file(path: &Path) -> Result<Manifest, Error> {
+    let mut content = String::new();
+    File::open(path)?.read_to_string(&mut content)?;
+
+    Ok(parse_manifest_toml(&content)?)
+}
+
 
 pub fn parse_manifest_toml(toml: &str) -> Result<Manifest, Error> {
     let manifest_toml: ManifestToml = toml::from_str(toml)?;
@@ -52,6 +64,8 @@ pub fn parse_manifest_toml(toml: &str) -> Result<Manifest, Error> {
 mod tests {
     use super::*;
     use crate::manifest::TemplateValue;
+    use crate::manifest::Template;
+    use std::path::PathBuf;
 
     #[test]
     fn should_parse_empty_manifest() {
@@ -84,4 +98,72 @@ mod tests {
             TemplateValue::Direct("other stuff".to_string())
         );
     }
+
+//    #[test]
+//    fn should_fail_parsing_invalid_values() {
+//        assert_eq!(
+//            parse_manifest_toml(
+//                r#"
+//                values = "these_are_not_values"
+//            "#
+//            ),
+//            Err(ManifestError::ParseError)
+//        );
+//    }
+//
+//    #[test]
+//    #[ignore]
+//    fn should_parse_user_values() {
+//        let man = parse_manifest_toml(
+//            r#"
+//            [values.my_value]
+//            user_prompt = "Please enter a value"
+//        "#,
+//        )
+//        .unwrap();
+//
+//        assert_eq!(
+//            man.values["my_value"],
+//            TemplateValue::User {
+//                prompt: "Please enter a value".to_string()
+//            }
+//        )
+//    }
+//
+//    #[test]
+//    #[ignore]
+//    fn should_fail_parsing_invalid_value() {
+//        assert_eq!(
+//            parse_manifest_toml(
+//                r#"
+//                [values]
+//                my_value = 4
+//            "#
+//            ),
+//            Err(ManifestError::ParseError)
+//        );
+//    }
+//
+//    #[test]
+//    #[ignore]
+//    fn should_parse_templates() {
+//        let man = parse_manifest_toml(
+//            r#"
+//            [templates.my_template]
+//            source = "source"
+//        "#,
+//        )
+//        .unwrap();
+//
+//        assert_eq!(
+//            man.templates["my_template"],
+//            Template {
+//                name: "some_name".to_string(),
+//                base_path: PathBuf::new(),
+//                source: Some("source".to_string()),
+//                destination: None,
+//            }
+//        )
+//    }
+
 }

@@ -4,6 +4,7 @@ use clap::Arg;
 use clap::ArgMatches;
 use failure::Error;
 use std::path::{Path, PathBuf};
+use crate::manifest_toml::parse_manifest_file;
 
 mod manifest;
 mod manifest_toml;
@@ -14,7 +15,7 @@ fn main() -> Result<(), Error> {
     println!("{:?}", app.get_manifest_path()?);
     println!("{}", app.get_template());
 
-    let manifest = Manifest::parse_file(app.get_manifest_path()?.as_ref());
+    let manifest = parse_manifest_file(app.get_manifest_path()?.as_ref());
 
     Ok(())
 }
