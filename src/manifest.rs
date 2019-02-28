@@ -27,11 +27,11 @@ pub enum TemplateValue {
 
 #[derive(Debug, PartialEq)]
 pub struct Template {
-    base_path: PathBuf,
-    name: String,
+    pub base_path: PathBuf,
+    pub name: String,
 
-    source: Option<String>,
-    destination: Option<String>,
+    pub source: Option<String>,
+    pub destination: Option<String>,
 }
 
 #[cfg(test)]

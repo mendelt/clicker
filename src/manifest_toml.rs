@@ -1,3 +1,4 @@
+use crate::manifest::Template;
 use crate::manifest::{Manifest, TemplateValue};
 use failure::Error;
 use serde_derive::Deserialize;
@@ -41,17 +42,31 @@ impl Into<Manifest> for ManifestToml {
                 .iter()
                 .map(|(key, value)| match value {
                     TemplateValueToml::Direct(val) => {
-                        (key.to_owned(), TemplateValue::Direct(val.to_owned()))
+                        (key.to_string(), TemplateValue::Direct(val.to_owned()))
                     }
                     TemplateValueToml::User { prompt } => (
-                        key.to_owned(),
+                        key.to_string(),
                         TemplateValue::User {
                             prompt: prompt.to_string(),
                         },
                     ),
                 })
                 .collect(),
-            templates: BTreeMap::new(),
+            templates: self
+                .templates
+                .iter()
+                .map(|(key, value)| {
+                    (
+                        key.to_string(),
+                        Template {
+                            base_path: self.base_path.clone(),
+                            name: key.to_string(),
+                            source: value.source.to_owned(),
+                            destination: value.destination.to_owned(),
+                        },
+                    )
+                })
+                .collect(),
         }
     }
 }
@@ -144,25 +159,25 @@ mod tests {
         .is_err(),);
     }
 
-    //    #[test]
-    //    fn should_parse_templates() {
-    //        let man = parse_manifest_toml(
-    //            r#"
-    //            [templates.my_template]
-    //            source = "source"
-    //        "#,
-    //        )
-    //        .unwrap();
-    //
-    //        assert_eq!(
-    //            man.templates["my_template"],
-    //            Template {
-    //                name: "some_name".to_string(),
-    //                base_path: PathBuf::new(),
-    //                source: Some("source".to_string()),
-    //                destination: None,
-    //            }
-    //        )
-    //    }
+    #[test]
+    fn should_parse_templates() {
+        let man = parse_manifest_toml(
+            r#"
+            [templates.some_name]
+            source = "source"
+        "#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            man.templates["some_name"],
+            Template {
+                name: "some_name".to_string(),
+                base_path: PathBuf::new(),
+                source: Some("source".to_string()),
+                destination: None,
+            }
+        )
+    }
 
 }
