@@ -27,6 +27,29 @@ struct TemplateToml {
     destination: Option<String>,
 }
 
+impl Into<Manifest> for ManifestToml {
+    fn into(self) -> Manifest {
+        Manifest {
+            values: self
+                .values
+                .iter()
+                .map(|(key, value)| match value {
+                    TemplateValueToml::Direct(val) => {
+                        (key.to_owned(), TemplateValue::Direct(val.to_owned()))
+                    }
+                    TemplateValueToml::User { prompt } => (
+                        key.to_owned(),
+                        TemplateValue::User {
+                            prompt: prompt.to_string(),
+                        },
+                    ),
+                })
+                .collect(),
+            templates: BTreeMap::new(),
+        }
+    }
+}
+
 pub fn parse_manifest_file(path: &Path) -> Result<Manifest, Error> {
     let mut content = String::new();
     File::open(path)?.read_to_string(&mut content)?;
@@ -34,27 +57,9 @@ pub fn parse_manifest_file(path: &Path) -> Result<Manifest, Error> {
     Ok(parse_manifest_toml(&content)?)
 }
 
-pub fn parse_manifest_toml(toml: &str) -> Result<Manifest, Error> {
-    let manifest_toml: ManifestToml = toml::from_str(toml)?;
-
-    Ok(Manifest {
-        values: manifest_toml
-            .values
-            .iter()
-            .map(|(key, value)| match value {
-                TemplateValueToml::Direct(val) => {
-                    (key.to_owned(), TemplateValue::Direct(val.to_owned()))
-                }
-                TemplateValueToml::User { prompt } => (
-                    key.to_owned(),
-                    TemplateValue::User {
-                        prompt: prompt.to_string(),
-                    },
-                ),
-            })
-            .collect(),
-        templates: BTreeMap::new(),
-    })
+pub fn parse_manifest_toml(value: &str) -> Result<Manifest, Error> {
+    let parsed: ManifestToml = toml::from_str(value)?;
+    Ok(parsed.into())
 }
 
 #[cfg(test)]
