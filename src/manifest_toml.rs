@@ -94,23 +94,22 @@ mod tests {
         );
     }
 
-    //    #[test]
-    //    fn should_parse_user_values() {
-    //        let man = parse_manifest_toml(
-    //            r#"
-    //            [values.my_value]
-    //            user_prompt = "Please enter a value"
-    //        "#,
-    //        )
-    //        .unwrap();
-    //
-    //        assert_eq!(
-    //            man.values["my_value"],
-    //            TemplateValue::User {
-    //                prompt: "Please enter a value".to_string()
-    //            }
-    //        )
-    //    }
+    #[test]
+    fn should_parse_user_values() {
+        assert_eq!(
+            parse_manifest_toml(
+                r#"
+                [values.my_value]
+                prompt = "Please enter a value"
+            "#,
+            )
+            .unwrap()
+            .values["my_value"],
+            TemplateValue::User {
+                prompt: "Please enter a value".to_string()
+            }
+        )
+    }
 
     #[test]
     fn should_fail_parsing_invalid_value_list() {
