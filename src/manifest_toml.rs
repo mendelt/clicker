@@ -60,9 +60,7 @@ pub fn parse_manifest_toml(toml: &str) -> Result<Manifest, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::manifest::Template;
     use crate::manifest::TemplateValue;
-    use std::path::PathBuf;
 
     #[test]
     fn should_parse_empty_manifest() {
@@ -77,7 +75,7 @@ mod tests {
 
     #[test]
     fn should_parse_string_values() {
-        let man = parse_manifest_toml(
+        let manifest = parse_manifest_toml(
             r#"
             [values]
             my_value = "stuff"
@@ -87,11 +85,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            man.values["my_value"],
+            manifest.values["my_value"],
             TemplateValue::Direct("stuff".to_string())
         );
         assert_eq!(
-            man.values["my_other_value"],
+            manifest.values["my_other_value"],
             TemplateValue::Direct("other stuff".to_string())
         );
     }

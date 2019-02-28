@@ -1,11 +1,6 @@
-use failure::{Error, Fail};
+use failure::Fail;
 use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::Read;
-use std::iter::FromIterator;
-use std::path::Path;
 use std::path::PathBuf;
-use toml::Value;
 
 #[derive(Debug, PartialEq)]
 pub struct Manifest {

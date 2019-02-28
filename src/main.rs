@@ -1,4 +1,3 @@
-use crate::manifest::Manifest;
 use crate::manifest_toml::parse_manifest_file;
 use clap::App;
 use clap::Arg;
@@ -15,7 +14,7 @@ fn main() -> Result<(), Error> {
     println!("{:?}", app.get_manifest_path()?);
     println!("{}", app.get_template());
 
-    let manifest = parse_manifest_file(app.get_manifest_path()?.as_ref());
+    let _manifest = parse_manifest_file(app.get_manifest_path()?.as_ref());
 
     Ok(())
 }
