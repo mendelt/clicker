@@ -5,11 +5,16 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Deserialize)]
 struct ManifestToml {
+    #[serde(skip)]
+    base_path: PathBuf,
+
     #[serde(default)]
     values: BTreeMap<String, TemplateValueToml>,
+
     #[serde(default)]
     templates: BTreeMap<String, TemplateToml>,
 }
@@ -30,6 +35,7 @@ struct TemplateToml {
 impl Into<Manifest> for ManifestToml {
     fn into(self) -> Manifest {
         Manifest {
+            base_path: self.base_path.clone(),
             values: self
                 .values
                 .iter()
@@ -72,6 +78,7 @@ mod tests {
         assert_eq!(
             parse_manifest_toml("").unwrap(),
             Manifest {
+                base_path: PathBuf::new(),
                 values: BTreeMap::new(),
                 templates: BTreeMap::new(),
             }

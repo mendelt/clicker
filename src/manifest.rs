@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 #[derive(Debug, PartialEq)]
 pub struct Manifest {
+    pub base_path: PathBuf,
+
     pub values: BTreeMap<String, TemplateValue>,
     pub templates: BTreeMap<String, Template>,
 }
