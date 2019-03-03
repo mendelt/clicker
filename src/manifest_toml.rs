@@ -72,14 +72,26 @@ impl Into<Manifest> for ManifestToml {
 }
 
 pub fn parse_manifest_file(path: &Path) -> Result<Manifest, Error> {
-    let mut content = String::new();
-    File::open(path)?.read_to_string(&mut content)?;
+    let path = path.canonicalize()?;
 
-    Ok(parse_manifest_toml(&content)?)
+    let (base_path, manifest_path) = if path.is_dir() {
+        (path.clone(), path.to_owned().join(".clicker"))
+    } else {
+        (path.parent().unwrap().to_owned(), path.clone())
+    };
+
+    println!("{:?} {:?}", base_path, manifest_path);
+
+    let mut content = String::new();
+    File::open(&manifest_path)?.read_to_string(&mut content)?;
+
+    Ok(parse_manifest_toml(&content, path)?)
 }
 
-pub fn parse_manifest_toml(value: &str) -> Result<Manifest, Error> {
-    let parsed: ManifestToml = toml::from_str(value)?;
+pub fn parse_manifest_toml(value: &str, base_path: PathBuf) -> Result<Manifest, Error> {
+    let mut parsed: ManifestToml = toml::from_str(value)?;
+    parsed.base_path = base_path;
+
     Ok(parsed.into())
 }
 
@@ -91,7 +103,7 @@ mod tests {
     #[test]
     fn should_parse_empty_manifest() {
         assert_eq!(
-            parse_manifest_toml("").unwrap(),
+            parse_manifest_toml("", PathBuf::new()).unwrap(),
             Manifest {
                 base_path: PathBuf::new(),
                 values: BTreeMap::new(),
@@ -108,6 +120,7 @@ mod tests {
             my_value = "stuff"
             my_other_value = "other stuff"
         "#,
+            PathBuf::new(),
         )
         .unwrap();
 
@@ -129,6 +142,7 @@ mod tests {
                 [values.my_value]
                 prompt = "Please enter a value"
             "#,
+                PathBuf::new()
             )
             .unwrap()
             .values["my_value"],
@@ -143,7 +157,8 @@ mod tests {
         assert!(parse_manifest_toml(
             r#"
                 values = "these_are_not_values"
-            "#
+            "#,
+            PathBuf::new()
         )
         .is_err());
     }
@@ -154,7 +169,8 @@ mod tests {
             r#"
                 [values]
                 my_value = 4
-            "#
+            "#,
+            PathBuf::new()
         )
         .is_err(),);
     }
@@ -166,6 +182,7 @@ mod tests {
             [templates.some_name]
             source = "source"
         "#,
+            PathBuf::new(),
         )
         .unwrap();
 

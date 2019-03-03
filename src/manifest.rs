@@ -40,6 +40,18 @@ pub struct Template {
     pub destination: Option<String>,
 }
 
+impl Template {
+    /// Get the full source path
+    pub fn source_path(&self) -> PathBuf {
+        let source = match &self.source {
+            Some(source) => PathBuf::from(source),
+            None => PathBuf::from(&self.name),
+        };
+
+        self.base_path.to_owned().join(source)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
