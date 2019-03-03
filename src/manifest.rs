@@ -10,6 +10,12 @@ pub struct Manifest {
     pub templates: BTreeMap<String, Template>,
 }
 
+impl Manifest {
+    pub fn template_by_name(&self, name: &str) -> Option<&Template> {
+        self.templates.get(name)
+    }
+}
+
 #[derive(Debug, PartialEq, Fail)]
 enum ManifestError {
     #[fail(display = "error parsing manifest")]
@@ -35,4 +41,55 @@ pub struct Template {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+    use std::collections::HashMap;
+
+    /// Construct a dummy manifest with some values for testing
+    fn test_manifest() -> Manifest {
+        let mut templates: BTreeMap<String, Template> = BTreeMap::new();
+
+        templates.insert(
+            "first_template".to_string(),
+            Template {
+                name: "first_template".to_string(),
+                base_path: PathBuf::new(),
+                source: Some("source".to_string()),
+                destination: Some("destination".to_string()),
+            },
+        );
+
+        templates.insert(
+            "second_template".to_string(),
+            Template {
+                name: "second_template".to_string(),
+                base_path: PathBuf::new(),
+                source: Some("source".to_string()),
+                destination: Some("destination".to_string()),
+            },
+        );
+
+        Manifest {
+            base_path: PathBuf::new(),
+            values: BTreeMap::new(),
+            templates: templates,
+        }
+    }
+
+    #[test]
+    fn should_get_template_by_name() {
+        let manifest = test_manifest();
+        let template = manifest.template_by_name("second_template").unwrap();
+
+        assert_eq!(template.name, "second_template");
+    }
+
+    #[test]
+    fn should_return_none_for_none_existing_template() {
+        let manifest = test_manifest();
+        let template = manifest.template_by_name("other_name");
+
+        assert_eq!(template, None);
+    }
+}
