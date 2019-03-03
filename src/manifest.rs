@@ -73,7 +73,7 @@ mod tests {
         Manifest {
             base_path: PathBuf::new(),
             values: BTreeMap::new(),
-            templates: templates,
+            templates,
         }
     }
 
